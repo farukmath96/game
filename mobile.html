@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: gray;
+            flex-direction: column;
+        }
+
+        .container {
+            position: relative;
+            background: white;
+            background-image: url(https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRsU41Y0jOw3lttMu4TCEaadptaCSqgDtg3aA&usqp=CAU);
+            background-size: 100% 100%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+
+        .circle {
+            position: absolute;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+
+        .newdiv {
+            position: absolute;
+            height: 25px;
+            width: 100px;
+            background: green;
+        }
+
+        @media(max-width:800px) {
+            .newdiv {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container" id="container">
+    </div>
+    <div id="score" style="position: absolute; top: 10px; left: 10px; color: white; font-size: 20px;"></div>
+
+    <script>
+        const WIDTH = window.innerWidth;
+        const HEIGHT = window.innerHeight;
+
+        let balls = [];
+        let me = {
+            xPosition: WIDTH / 2,
+            yPosition: HEIGHT / 2
+        };
+
+        let containerForCreateElement = document.querySelector('.container');
+        let moveTimer = setInterval(moveBall, 30);
+
+        function moveBall() {
+            balls.forEach((ball, i) => {
+                if (ball.yPosition > HEIGHT - ball.size || ball.yPosition < 0) {
+                    ball.dy = - ball.dy;
+                    const randomNumber = Math.random();
+                    if (randomNumber > .8) {
+                        balls.splice(i, 1);
+                        addNewBallAfterDelay();
+                    }
+                } else if (ball.xPosition > WIDTH - ball.size || ball.xPosition < 0) {
+                    ball.dx = - ball.dx;
+                }
+
+                ball.xPosition = ball.xPosition + ball.dx;
+                ball.yPosition = ball.yPosition + ball.dy;
+
+                checkCollisionWithSquare(ball);
+                render();
+            });
+        };
+
+        let score = 0;
+
+        function checkCollisionWithSquare(ball) {
+            const squareTop = me.yPosition;
+            const squareBottom = me.yPosition + 25;
+            const squareLeft = me.xPosition;
+            const squareRight = me.xPosition + 100;
+
+            const ballTop = ball.yPosition;
+            const ballBottom = ball.yPosition + ball.size;
+            const ballLeft = ball.xPosition;
+            const ballRight = ball.xPosition + ball.size;
+
+            if (
+                ballBottom >= squareTop &&
+                ballTop <= squareBottom &&
+                ballRight >= squareLeft &&
+                ballLeft <= squareRight &&
+                WIDTH > 800
+            ) {
+                const index = balls.indexOf(ball);
+
+                if (index !== -1 && ball.color === "green") {
+                    balls.splice(index, 1);
+                    score += ball.size;
+                    addNewBallAfterDelay();
+                } else if (index !== -1 && ball.color === "red") {
+                    balls.splice(index, 1);
+                    score -= ball.size;
+                    addNewBallAfterDelay();
+                }
+            }
+        };
+
+
+        function addNewBallAfterDelay() {
+            setTimeout(() => {
+                add();
+                render();
+            }, 5000);
+        }
+
+        document.getElementById('score').innerText = `Score: ${score}`;
+
+        function render() {
+            let content = '';
+            balls.forEach((details) => {
+                content += `
+                    <div id="${details.id}" onclick="handleClick(this)" class="circle" style="height:${details.size}px; width:${details.size}px; background:${details.color}; top:${details.yPosition}px; left:${details.xPosition}px;">${details.size}</div>
+                `;
+            });
+            content += `<div class="newdiv" style="top:${me.yPosition}px; left:${me.xPosition}px;"></div>`
+            document.getElementById('container').innerHTML = content;
+            document.getElementById('score').innerText = `Score: ${score}`;
+        };
+
+        function handleClick(ballelement) {
+            const ballId = parseInt(ballelement.id);
+            const clickedBallIndex = balls.findIndex(ball => ball.id === ballId);
+
+            if (clickedBallIndex !== -1) {
+                const clickedBall = balls[clickedBallIndex];
+
+                if (clickedBall.color === 'green') {
+                    score += clickedBall.size;
+                    addNewBallAfterDelay();
+                } else if (clickedBall.color === 'red') {
+                    score -= clickedBall.size;
+                    addNewBallAfterDelay();
+                }
+                balls.splice(clickedBallIndex, 1);
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            let moveSpeed = 10;
+            switch (e.key) {
+                case 'ArrowUp':
+                    if (me.yPosition - moveSpeed >= 0) {
+                        me.yPosition -= moveSpeed;
+                    }
+                    break;
+                case 'ArrowDown':
+                    if (me.yPosition + moveSpeed + 25 <= HEIGHT) {
+                        me.yPosition += moveSpeed;
+                    }
+                    break;
+                case 'ArrowLeft':
+                    if (me.xPosition - moveSpeed >= 0) {
+                        me.xPosition -= moveSpeed;
+                    }
+                    break;
+                case 'ArrowRight':
+                    if (me.xPosition + moveSpeed + 100 <= WIDTH) {
+                        me.xPosition += moveSpeed;
+                    }
+                    break;
+            }
+            render();
+        });
+
+
+
+
+        function add() {
+            let myObject = {};
+
+            let randomId = Math.floor(Math.random() * 1000000);
+            let maximumHeightWidth = 100;
+            let minimumHeightWidth = 25;
+            let randomHeightAndWidth = Math.floor(Math.random() * (maximumHeightWidth - minimumHeightWidth + 1)) + minimumHeightWidth;
+            let randomXPosition = Math.floor(Math.random() * (WIDTH - 100));
+            let randomYPosition = Math.floor(Math.random() * (HEIGHT - 100));
+            let randomDx = Math.floor(Math.random() * 5) + 1;
+            let randomDy = Math.floor(Math.random() * 5) + 1;
+            let randomColor = Math.random() < 0.5 ? "red" : "green";
+
+            myObject[`id`] = randomId;
+            myObject[`size`] = randomHeightAndWidth;
+            myObject[`xPosition`] = randomXPosition;
+            myObject[`yPosition`] = randomYPosition;
+            myObject[`dx`] = randomDx;
+            myObject[`dy`] = randomDy;
+            myObject[`color`] = randomColor;
+
+            balls.push(myObject);
+        }
+        for (i = 1; i <= 5; i++) {
+            add();
+        }
+    </script>
+</body>
+
+</html>
